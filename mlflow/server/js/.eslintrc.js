@@ -84,7 +84,7 @@ module.exports = {
     'id-match': 2,
     'import/default': 0,
     'import/export': 2,
-    'import/extensions': ['error', 'ignorePackages', {
+    'import/extensions': ['error', 'always', {
       'js': 'never',
       'jsx': 'never',
       'ts': 'never',

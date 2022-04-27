@@ -46,8 +46,6 @@ from mlflow.utils.environment import (
     _process_conda_env,
     _CONSTRAINTS_FILE_NAME,
     _REQUIREMENTS_FILE_NAME,
-    _PYTHON_ENV_FILE_NAME,
-    _PythonEnv,
 )
 from mlflow.utils.docstring_utils import format_docstring, LOG_MODEL_PARAM_DOCS
 
@@ -189,8 +187,6 @@ def save_model(
         write_to(os.path.join(path, _CONSTRAINTS_FILE_NAME), "\n".join(pip_constraints))
 
     write_to(os.path.join(path, _REQUIREMENTS_FILE_NAME), "\n".join(pip_requirements))
-
-    _PythonEnv.current().to_yaml(os.path.join(path, _PYTHON_ENV_FILE_NAME))
 
 
 @experimental

@@ -135,7 +135,6 @@ setup(
             # Required to serve models through MLServer
             "mlserver>=0.5.3",
             "mlserver-mlflow>=0.5.3",
-            "virtualenv",
         ],
         "sqlserver": ["mlflow-dbstore"],
         "aliyun-oss": ["aliyunstoreplugin"],

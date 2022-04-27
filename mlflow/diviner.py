@@ -39,8 +39,6 @@ from mlflow.utils.environment import (
     _process_conda_env,
     _CONSTRAINTS_FILE_NAME,
     _REQUIREMENTS_FILE_NAME,
-    _PYTHON_ENV_FILE_NAME,
-    _PythonEnv,
 )
 from mlflow.utils.file_utils import write_to
 from mlflow.utils.model_utils import (
@@ -182,10 +180,7 @@ def save_model(
 
     if pip_constraints:
         write_to(str(path.joinpath(_CONSTRAINTS_FILE_NAME)), "\n".join(pip_constraints))
-
     write_to(str(path.joinpath(_REQUIREMENTS_FILE_NAME)), "\n".join(pip_requirements))
-
-    _PythonEnv.current().to_yaml(str(path.joinpath(_PYTHON_ENV_FILE_NAME)))
 
 
 @experimental

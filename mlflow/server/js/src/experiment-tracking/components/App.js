@@ -31,12 +31,6 @@ const isExperimentsActive = (match, location) => {
   return isActive;
 };
 
-let mlflowHashRouting = false;
-
-export function setMLFlowHashRouting() {
-  mlflowHashRouting = true;
-}
-
 const classNames = {
   activeNavLink: { borderBottom: '4px solid #43C9ED' },
 };
@@ -44,10 +38,7 @@ const classNames = {
 class App extends Component {
   render() {
     return (
-      <Router
-        basename={mlflowHashRouting ? '/mlflow' : undefined}
-        hashType={mlflowHashRouting ? 'noslash' : undefined}
-      >
+      <Router>
         <div style={{ height: '100vh' }}>
           <ErrorModal />
           {process.env.HIDE_HEADER === 'true' ? null : (

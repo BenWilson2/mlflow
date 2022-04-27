@@ -1,5 +1,6 @@
 from packaging.version import Version
 import os
+import warnings
 import yaml
 from unittest import mock
 
@@ -80,9 +81,9 @@ def gluon_model(model_data):
     )
 
     est = get_estimator(model, trainer)
-
-    est.fit(train_data_loader, epochs=3)
-
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        est.fit(train_data_loader, epochs=3)
     return model
 
 
