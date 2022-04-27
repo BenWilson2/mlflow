@@ -54,7 +54,7 @@ jobs:
           git config --global user.email "test@mlflow.org"
       - name: Install development environment
         run: |
-          ./dev/dev-env-setup.sh -f -d ./.venvs/mlflow-dev
+          ./dev/dev-env-setup.sh -q -f -d ./.venvs/mlflow-dev
       - name: Run Environment tests
         run: |
           ./dev/test-dev-env-setup.sh
