@@ -79,8 +79,17 @@ class LocalArtifactRepository(ArtifactRepository):
             return super().download_artifacts(artifact_path, dst_path)
         # NOTE: The artifact_path is expected to be a relative path in posix format.
         # Posix paths work fine on windows but just in case we normalize it here.
+
+        # DEBUG
+        print(f"Input target artifact path: {artifact_path}")
+
         artifact_path = validate_path_is_safe(artifact_path)
         local_artifact_path = os.path.join(self.artifact_dir, os.path.normpath(artifact_path))
+
+        print(f"Sanitized artifact path destination: {local_artifact_path}")
+
+        print(f"Directory contents: {os.listdir(self.artifact_dir)}")
+
         if not os.path.exists(local_artifact_path):
             raise OSError(f"No such file or directory: '{local_artifact_path}'")
         return os.path.abspath(local_artifact_path)
