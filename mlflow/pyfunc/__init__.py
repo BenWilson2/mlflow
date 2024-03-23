@@ -1603,9 +1603,14 @@ def spark_udf(
             "when either non-Databricks environment is in use or NFS is unavailable.",
         )
 
+    # DEBUG
+    target_local_model_path = _create_model_downloading_tmp_dir(should_use_nfs)
+
+    print(f"TARGET LOCAL OUTPUT PATH FOR MODEL: {target_local_model_path}")
+
     local_model_path = _download_artifact_from_uri(
         artifact_uri=model_uri,
-        output_path=_create_model_downloading_tmp_dir(should_use_nfs),
+        output_path=target_local_model_path,
     )
 
     if env_manager == _EnvManager.LOCAL:
