@@ -36,6 +36,7 @@ def get_nfs_cache_root_dir():
                 test_path = os.path.join(nfs_root_dir, uuid.uuid4().hex)
                 try:
                     os.makedirs(test_path)
+                    print(f"NFS ROOT DIR CREATED: {nfs_root_dir}")
                     return nfs_root_dir
                 except Exception:
                     # For databricks cluster enabled Table ACL, we have no permission to access NFS
