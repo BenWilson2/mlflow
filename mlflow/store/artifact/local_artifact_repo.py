@@ -83,6 +83,10 @@ class LocalArtifactRepository(ArtifactRepository):
         artifact_path = validate_path_is_safe(artifact_path)
         local_artifact_path = os.path.join(self.artifact_dir, os.path.normpath(artifact_path))
 
+        if local_artifact_path.endswith("."):
+            local_artifact_path.rstrip(".")
+        assert local_artifact_path.endswith("/")
+
         if not os.path.exists(local_artifact_path):
             raise OSError(f"No such file or directory: '{local_artifact_path}'")
         return os.path.abspath(local_artifact_path)
