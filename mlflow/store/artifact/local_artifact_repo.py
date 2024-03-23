@@ -85,7 +85,6 @@ class LocalArtifactRepository(ArtifactRepository):
 
         if local_artifact_path.endswith("."):
             local_artifact_path.rstrip(".")
-        assert local_artifact_path.endswith("/")
 
         if not os.path.exists(local_artifact_path):
             raise OSError(f"No such file or directory: '{local_artifact_path}'")
