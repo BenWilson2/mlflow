@@ -1581,7 +1581,9 @@ def spark_udf(
     # this case all executors and driver share the same filesystem
     is_spark_in_local_mode = spark.conf.get("spark.master").startswith("local")
 
-    nfs_root_dir = get_nfs_cache_root_dir()
+    # nfs_root_dir = get_nfs_cache_root_dir()
+    # TEST ONLY
+    nfs_root_dir = None
     should_use_nfs = nfs_root_dir is not None
     should_use_spark_to_broadcast_file = not (
         is_spark_in_local_mode or should_use_nfs or is_spark_connect
