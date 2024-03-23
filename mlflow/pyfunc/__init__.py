@@ -1613,6 +1613,8 @@ def spark_udf(
         output_path=target_local_model_path,
     )
 
+    print(f"LOCAL MODEL DIR CONTENTS: {os.listdir(local_model_path)}")
+
     if env_manager == _EnvManager.LOCAL:
         # Assume spark executor python environment is the same with spark driver side.
         model_requirements = _get_pip_requirements_from_model_path(local_model_path)
@@ -1664,6 +1666,9 @@ def spark_udf(
         archive_path = SparkModelCache.add_local_model(spark, local_model_path)
 
     model_metadata = Model.load(os.path.join(local_model_path, MLMODEL_FILE_NAME))
+
+    # DEBUG
+    print(f"MODEL METADATA FROM DRIVER: {model_metadata.to_dict()}")
 
     if result_type is None:
         if model_output_schema := model_metadata.get_output_schema():
