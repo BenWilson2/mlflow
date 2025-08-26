@@ -3130,17 +3130,11 @@ message OptimizePrompts {
   // List of scorer names to use for evaluation.
   repeated string scorers = 4 [(validate_required) = true];
 
-  // Configuration for prompt optimization.
-  message PromptOptimizationConfig {
     // Target LLM to use for optimization.
-    optional string target_llm = 1;
+  optional string target_llm = 5;
 
-    // Algorithm to use for optimization.
-    optional string algorithm = 2;
-  }
-
-  // Configuration for the optimization process.
-  optional PromptOptimizationConfig config = 5;
+  // Algorithm to use for optimization.
+  optional string algorithm = 6;
 
   message Response {
     // ID of the created optimization job.
