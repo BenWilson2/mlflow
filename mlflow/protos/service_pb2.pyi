@@ -1548,14 +1548,7 @@ class Scorer(_message.Message):
     def __init__(self, experiment_id: _Optional[int] = ..., scorer_name: _Optional[str] = ..., scorer_version: _Optional[int] = ..., serialized_scorer: _Optional[str] = ..., creation_time: _Optional[int] = ...) -> None: ...
 
 class OptimizePrompts(_message.Message):
-    __slots__ = ("train_dataset_id", "eval_dataset_id", "prompt_url", "scorers", "config")
-    class PromptOptimizationConfig(_message.Message):
-        __slots__ = ("target_llm", "algorithm")
-        TARGET_LLM_FIELD_NUMBER: _ClassVar[int]
-        ALGORITHM_FIELD_NUMBER: _ClassVar[int]
-        target_llm: str
-        algorithm: str
-        def __init__(self, target_llm: _Optional[str] = ..., algorithm: _Optional[str] = ...) -> None: ...
+    __slots__ = ("train_dataset_id", "eval_dataset_id", "prompt_url", "scorers", "target_llm", "algorithm")
     class Response(_message.Message):
         __slots__ = ("job_id",)
         JOB_ID_FIELD_NUMBER: _ClassVar[int]
@@ -1565,13 +1558,15 @@ class OptimizePrompts(_message.Message):
     EVAL_DATASET_ID_FIELD_NUMBER: _ClassVar[int]
     PROMPT_URL_FIELD_NUMBER: _ClassVar[int]
     SCORERS_FIELD_NUMBER: _ClassVar[int]
-    CONFIG_FIELD_NUMBER: _ClassVar[int]
+    TARGET_LLM_FIELD_NUMBER: _ClassVar[int]
+    ALGORITHM_FIELD_NUMBER: _ClassVar[int]
     train_dataset_id: str
     eval_dataset_id: str
     prompt_url: str
     scorers: _containers.RepeatedScalarFieldContainer[str]
-    config: OptimizePrompts.PromptOptimizationConfig
-    def __init__(self, train_dataset_id: _Optional[str] = ..., eval_dataset_id: _Optional[str] = ..., prompt_url: _Optional[str] = ..., scorers: _Optional[_Iterable[str]] = ..., config: _Optional[_Union[OptimizePrompts.PromptOptimizationConfig, _Mapping]] = ...) -> None: ...
+    target_llm: str
+    algorithm: str
+    def __init__(self, train_dataset_id: _Optional[str] = ..., eval_dataset_id: _Optional[str] = ..., prompt_url: _Optional[str] = ..., scorers: _Optional[_Iterable[str]] = ..., target_llm: _Optional[str] = ..., algorithm: _Optional[str] = ...) -> None: ...
 
 class GetOptimizePromptsJob(_message.Message):
     __slots__ = ("job_id",)
