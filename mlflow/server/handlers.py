@@ -52,6 +52,7 @@ from mlflow.environment_variables import (
 )
 from mlflow.exceptions import MlflowException, _UnsupportedMultipartUploadException
 from mlflow.genai.scorers.builtin_scorers import get_builtin_scorer_by_name
+from mlflow.genai.optimize.types import LLMParams, OptimizerConfig
 from mlflow.models import Model
 from mlflow.protos import databricks_pb2
 from mlflow.protos.databricks_pb2 import (
@@ -3801,7 +3802,8 @@ class PromptOptimizationJobManager:
         self._lock = threading.Lock()
 
     def create_job(self, train_dataset_id: str, eval_dataset_id: str,
-                   prompt_url: str, scorers: list[str], config: dict) -> str:
+                   prompt_url: str, scorers: list[str], target_llm: str = None, 
+                   algorithm: str = None) -> str:
         """Create a new prompt optimization job."""
         with self._lock:
             job_id = str(self._next_job_id)
@@ -3813,7 +3815,8 @@ class PromptOptimizationJobManager:
                 "eval_dataset_id": eval_dataset_id,
                 "prompt_url": prompt_url,
                 "scorers": scorers,
-                "config": config,
+                "target_llm": target_llm,
+                "algorithm": algorithm,
                 "result": None,
                 "error": None,
                 "created_time": time.time()
@@ -3831,42 +3834,92 @@ class PromptOptimizationJobManager:
 
     def get_job(self, job_id: str) -> Optional[Dict]:
         """Get job status and result."""
-        return self._jobs.get(job_id)
+        return self._jobs.get(job_id).copy()
 
     def _run_job(self, job_id: str):
         """Run the prompt optimization job."""
-        from mlflow.tracking.client import MlflowClient
+        from mlflow.genai.datasets import get_dataset
         from mlflow.genai.optimize import optimize_prompt
+        from mlflow.genai.prompts import load_prompt
 
         try:
             job = self._jobs[job_id]
             job["status"] = "RUNNING"
 
             # Load datasets
-            client = MlflowClient()
-
-            train_dataset = client.get_dataset(job["train_dataset_id"])
-            eval_dataset = client.get_dataset(job["eval_dataset_id"])
+            train_dataset = get_dataset(job["train_dataset_id"])
+            eval_dataset = get_dataset(job["eval_dataset_id"])
 
             # Convert to pandas DataFrames
             train_df = train_dataset.to_df()
             eval_df = eval_dataset.to_df()
-
+            
+            # Validate dataset structure
+            required_columns = ["inputs", "expectations"]
+            missing_columns = []
+            for col in required_columns:
+                if col not in train_df.columns:
+                    missing_columns.append(col)
+            
+            if missing_columns:
+                raise MlflowException(
+                    f"Training dataset missing required columns: {missing_columns}. "
+                    f"Available columns: {list(train_df.columns)}",
+                    INVALID_PARAMETER_VALUE,
+                )
+            
             # Get scorers
             scorer_instances = []
             for scorer_name in job["scorers"]:
-                scorer = get_builtin_scorer_by_name(scorer_name)
-                scorer_instances.append(scorer)
+                try:
+                    scorer = get_builtin_scorer_by_name(scorer_name)
+                    scorer_instances.append(scorer)
+                except Exception as e:
+                    raise MlflowException(
+                        f"Failed to create scorer '{scorer_name}': {e}",
+                        INVALID_PARAMETER_VALUE,
+                    )
+            
+            if not scorer_instances:
+                raise MlflowException(
+                    "No valid scorers provided for optimization",
+                    INVALID_PARAMETER_VALUE,
+                )
 
-            optimize_prompt()
-            # TODO: Implement actual prompt optimization logic here
-            # For now, just simulate the process
-            time.sleep(2)  # Simulate processing time
+            # Log optimization parameters
+            _logger.info(f"Starting prompt optimization job: {job_id}")
 
-            # Set result (this would be the actual optimized prompt)
+            # Set up LLM parameters
+            
+            # Parse target_llm to create LLMParams
+            target_llm = job['target_llm']
+            llm_params = LLMParams(model_name=target_llm)
+            
+            # Set up optimizer config
+            algorithm = job['algorithm']
+            optimizer_config = OptimizerConfig(
+                algorithm=algorithm,
+                autolog=True,
+            )
+
+            prompt_input = load_prompt(job["prompt_url"])
+            
+            # Call the actual optimize_prompt function
+            result = optimize_prompt(
+                target_llm_params=llm_params,
+                prompt=prompt_input,
+                train_data=train_df,
+                scorers=scorer_instances,
+                eval_data=eval_df,
+                optimizer_config=optimizer_config,
+            )
+            
+            _logger.info(f"Prompt optimization job {job_id} completed.")
+
+            # Save optimization result
             job["result"] = {
-                "prompt_url": f"{job['prompt_url']}_optimized",
-                "evaluation_score": 0.85  # This would be the actual score
+                "prompt_url": result.prompt.uri,
+                "evaluation_score": result.final_eval_score or 0.0
             }
             job["status"] = "COMPLETED"
 
@@ -3894,19 +3947,13 @@ def _optimize_prompts_handler():
             "eval_dataset_id": [_assert_required, _assert_string],
             "prompt_url": [_assert_required, _assert_string],
             "scorers": [_assert_required, _assert_array],
+            "target_llm": [_assert_required, _assert_string],
+            "algorithm": [_assert_string],
         },
     )
     
-    # Extract config fields
-    config = {}
-    if hasattr(request_message, "config") and request_message.config:
-        try:
-            config = json.loads(request_message.config)
-        except json.JSONDecodeError:
-            raise MlflowException(
-                "Invalid config JSON format",
-                INVALID_PARAMETER_VALUE,
-            )
+    target_llm = request_message.target_llm
+    algorithm = request_message.algorithm or "DSPy/MIPROv2"
     
     # Create the optimization job
     job_id = _prompt_optimization_job_manager.create_job(
@@ -3914,9 +3961,10 @@ def _optimize_prompts_handler():
         eval_dataset_id=request_message.eval_dataset_id,
         prompt_url=request_message.prompt_url,
         scorers=list(request_message.scorers),
-        config=config
+        target_llm=target_llm,
+        algorithm=algorithm
     )
-    
+
     response_message = OptimizePrompts.Response()
     response_message.job_id = job_id
     return _wrap_response(response_message)
@@ -3935,20 +3983,12 @@ def _get_optimize_prompts_job_handler(job_id):
         )
     
     response_message = GetOptimizePromptsJob.Response()
-    
-    # Map status to enum
-    status_map = {
-        "PENDING": GetOptimizePromptsJob.PromptOptimizationJobStatus.PENDING,
-        "RUNNING": GetOptimizePromptsJob.PromptOptimizationJobStatus.RUNNING,
-        "COMPLETED": GetOptimizePromptsJob.PromptOptimizationJobStatus.COMPLETED,
-        "FAILED": GetOptimizePromptsJob.PromptOptimizationJobStatus.FAILED,
-    }
-    
-    response_message.status = status_map.get(job["status"], 
-        GetOptimizePromptsJob.PromptOptimizationJobStatus.PROMPT_OPTIMIZATION_JOB_STATUS_UNSPECIFIED)
-    
+
+    response_message.status = GetOptimizePromptsJob.PromptOptimizationJobStatus.Value(
+        job["status"]
+    )
     # Add result if job is completed
-    if job["status"] == "COMPLETED" and job["result"]:
+    if job["status"] == "COMPLETED":
         result = response_message.result
         result.prompt_url = job["result"]["prompt_url"]
         result.evaluation_score = job["result"]["evaluation_score"]
