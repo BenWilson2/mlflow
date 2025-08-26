@@ -11,10 +11,13 @@ import tempfile
 import threading
 import time
 import urllib
+from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 from typing import Dict, Optional
 
 _logger = logging.getLogger(__name__)
+
+
 
 import requests
 from flask import Response, current_app, jsonify, request, send_file
@@ -49,6 +52,7 @@ from mlflow.entities.webhook import WebhookAction, WebhookEntity, WebhookEvent, 
 from mlflow.environment_variables import (
     MLFLOW_CREATE_MODEL_VERSION_SOURCE_VALIDATION_REGEX,
     MLFLOW_DEPLOYMENTS_TARGET,
+    MLFLOW_MAX_CONCURRENT_PROMPT_OPTIMIZATION_JOBS,
 )
 from mlflow.exceptions import MlflowException, _UnsupportedMultipartUploadException
 from mlflow.genai.scorers.builtin_scorers import get_builtin_scorer_by_name
@@ -3794,12 +3798,16 @@ def _get_dataset_records_handler(dataset_id):
 
 # Prompt Optimization Job Management
 class PromptOptimizationJobManager:
-    """Manages prompt optimization jobs in memory."""
+    """Manages prompt optimization jobs using a thread pool for controlled concurrency."""
 
     def __init__(self):
         self._jobs: Dict[str, Dict] = {}
         self._next_job_id = 0
         self._lock = threading.Lock()
+        self._executor = ThreadPoolExecutor(
+            max_workers=MLFLOW_MAX_CONCURRENT_PROMPT_OPTIMIZATION_JOBS.get(),
+            thread_name_prefix="prompt_opt"
+        )
 
     def create_job(self, train_dataset_id: str, eval_dataset_id: str,
                    prompt_url: str, scorers: list[str], target_llm: str = None, 
@@ -3822,13 +3830,8 @@ class PromptOptimizationJobManager:
                 "created_time": time.time()
             }
 
-            # Start the job in a separate thread
-            thread = threading.Thread(
-                target=self._run_job,
-                args=(job_id,),
-                daemon=True
-            )
-            thread.start()
+            # Submit the job to the thread pool
+            self._executor.submit(self._run_job, job_id)
 
             return job_id
 
