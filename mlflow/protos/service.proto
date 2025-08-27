@@ -3122,7 +3122,7 @@ message OptimizePrompts {
   optional string train_dataset_id = 1 [(validate_required) = true];
   
   // ID of the evaluation dataset.
-  optional string eval_dataset_id = 2 [(validate_required) = true];
+  optional string eval_dataset_id = 2 [(validate_required) = false];
   
   // URL of the prompt to optimize.
   optional string prompt_url = 3 [(validate_required) = true];
