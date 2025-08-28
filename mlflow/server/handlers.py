@@ -514,6 +514,37 @@ def _assert_item_type_string(x):
     assert all(isinstance(item, str) for item in x)
 
 
+def _assert_scorer_param(x):
+    """Validate that x is a valid ScorerParam object."""
+    assert isinstance(x, dict), "ScorerParam must be a dictionary"
+    
+    # Check if it's a string name (has 'name' field)
+    if "name" in x:
+        assert isinstance(x["name"], str), "ScorerParam name must be a string"
+        # Should not have other fields for string name
+        assert len(x) == 1, "ScorerParam with name should not have other fields"
+    # Check if it's a custom scorer (has 'custom_scorer' field)
+    elif "custom_scorer" in x:
+        custom_scorer = x["custom_scorer"]
+        assert isinstance(custom_scorer, dict), "custom_scorer must be a dictionary"
+        assert "name" in custom_scorer, "custom_scorer must have 'name' field"
+        assert isinstance(custom_scorer["name"], str), "custom_scorer name must be a string"
+        assert "experiment_id" in custom_scorer, "custom_scorer must have 'experiment_id' field"
+        assert isinstance(custom_scorer["experiment_id"], str), "custom_scorer experiment_id must be a string"
+        if "version" in custom_scorer:
+            assert isinstance(custom_scorer["version"], int), "custom_scorer version must be an integer"
+        # Should not have other fields
+        assert len(x) == 1, "ScorerParam with custom_scorer should not have other fields"
+    else:
+        raise AssertionError("ScorerParam must have either 'name' or 'custom_scorer' field")
+
+
+def _assert_scorer_params(x):
+    _assert_array(x)
+    for e in x:
+        _assert_scorer_param(e)
+
+
 _TYPE_VALIDATORS = {
     _assert_intlike,
     _assert_string,
@@ -3800,7 +3831,7 @@ def _optimize_prompts_handler():
             "train_dataset_id": [_assert_required, _assert_string],
             "eval_dataset_id": [_assert_string],
             "prompt_url": [_assert_required, _assert_string],
-            "scorers": [_assert_required, _assert_array],
+            "scorers": [_assert_required, _assert_scorer_params],
             "target_llm": [_assert_required, _assert_string],
             "algorithm": [_assert_string],
         },
@@ -3814,7 +3845,7 @@ def _optimize_prompts_handler():
         train_dataset_id=request_message.train_dataset_id,
         eval_dataset_id=request_message.eval_dataset_id,
         prompt_url=request_message.prompt_url,
-        scorers=list(request_message.scorers),
+        scorers=request_message.scorers,
         target_llm=target_llm,
         algorithm=algorithm
     )

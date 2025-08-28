@@ -28,7 +28,7 @@ class PromptOptimizationJobManager:
         )
 
     def create_job(self, *, train_dataset_id: str, eval_dataset_id: str | None,
-                   prompt_url: str, scorers: list[str], target_llm: str,
+                   prompt_url: str, scorers: list, target_llm: str,
                    algorithm: str | None) -> str:
         """Create a new prompt optimization job."""
         with self._lock:
@@ -61,7 +61,7 @@ class PromptOptimizationJobManager:
         """Run the prompt optimization job."""
         from mlflow.genai.datasets import get_dataset
         from mlflow.genai.optimize import optimize_prompt
-        from mlflow.genai.prompts import load_prompt
+        from mlflow.genai.scorers import get_scorer
 
         try:
             job = self._jobs[job_id]
@@ -91,13 +91,30 @@ class PromptOptimizationJobManager:
 
             # Get scorers
             scorer_instances = []
-            for scorer_name in job["scorers"]:
+            for scorer_param in job["scorers"]:
                 try:
-                    scorer = get_builtin_scorer_by_name(scorer_name)
-                    scorer_instances.append(scorer)
+                    if "name" in scorer_param:
+                        # Built-in scorer by name
+                        scorer_name = scorer_param["name"]
+                        scorer = get_builtin_scorer_by_name(scorer_name)
+                        scorer_instances.append(scorer)
+                    elif "custom_scorer" in scorer_param:
+                        # Custom scorer - need to load from experiment
+                        custom_scorer = scorer_param["custom_scorer"]
+                        scorer = get_scorer(
+                            name=custom_scorer["name"],
+                            experiment_id=custom_scorer["experiment_id"],
+                            version=custom_scorer.get("version")
+                        )
+                        scorer_instances.append(scorer)
+                    else:
+                        raise MlflowException(
+                            f"Invalid scorer parameter: {scorer_param}",
+                            INVALID_PARAMETER_VALUE,
+                        )
                 except Exception as e:
                     raise MlflowException(
-                        f"Failed to create scorer '{scorer_name}': {e}",
+                        f"Failed to create scorer from parameter '{scorer_param}': {e}",
                         INVALID_PARAMETER_VALUE,
                     )
 
