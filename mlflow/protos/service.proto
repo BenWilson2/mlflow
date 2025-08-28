@@ -3118,7 +3118,7 @@ message ScorerParam {
   }
    oneof param {
       string name = 1;
-      CustomScorerParam = 2;
+      CustomScorerParam custom_scorer = 2;
    }
 }
 
