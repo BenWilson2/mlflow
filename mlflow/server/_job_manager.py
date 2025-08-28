@@ -55,7 +55,10 @@ class PromptOptimizationJobManager:
 
     def get_job(self, job_id: str) -> Optional[Dict]:
         """Get job status and result."""
-        return self._jobs.get(job_id).copy()
+        job = self._jobs.get(job_id)
+        if job:
+            return job.copy()
+        return None
 
     def _run_job(self, job_id: str):
         """Run the prompt optimization job."""

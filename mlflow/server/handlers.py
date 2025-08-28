@@ -3824,6 +3824,7 @@ def _get_dataset_records_handler(dataset_id):
 def _optimize_prompts_handler():
     """Handle POST /ajax-api/3.0/mlflow/optimize-prompts"""
     from mlflow.server._job_manager import _prompt_optimization_job_manager
+    from google.protobuf.json_format import MessageToDict
 
     request_message = _get_request_message(
         OptimizePrompts(),
@@ -3839,15 +3840,15 @@ def _optimize_prompts_handler():
     
     target_llm = request_message.target_llm
     algorithm = request_message.algorithm or "DSPy/MIPROv2"
-    
+
     # Create the optimization job
     job_id = _prompt_optimization_job_manager.create_job(
         train_dataset_id=request_message.train_dataset_id,
         eval_dataset_id=request_message.eval_dataset_id,
         prompt_url=request_message.prompt_url,
-        scorers=request_message.scorers,
+        scorers=[MessageToDict(s, preserving_proto_field_name=True) for s in request_message.scorers],
         target_llm=target_llm,
-        algorithm=algorithm
+        algorithm=algorithm,
     )
 
     response_message = OptimizePrompts.Response()
@@ -3871,15 +3872,13 @@ def _get_optimize_prompts_job_handler(job_id):
     
     response_message = GetOptimizePromptsJob.Response()
 
-    response_message.status = GetOptimizePromptsJob.PromptOptimizationJobStatus.Value(
-        job["status"]
-    )
+    response_message.status = job["status"]
     # Add result if job is completed
-    if job["status"] == "COMPLETED":
+    if job["status"] == GetOptimizePromptsJob.PromptOptimizationJobStatus.COMPLETED:
         result = response_message.result
         result.prompt_url = job["result"]["prompt_url"]
         result.evaluation_score = job["result"]["evaluation_score"]
-    
+
     return _wrap_response(response_message)
 
 
