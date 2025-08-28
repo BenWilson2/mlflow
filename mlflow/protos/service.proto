@@ -3110,6 +3110,18 @@ message Scorer {
   optional int64 creation_time = 5;
 }
 
+message ScorerParam {
+   message CustomScorerParam {
+     optional string name = 1;
+     optional string experiment_id = 2;
+     optional int32 version = 3;
+  }
+   oneof param {
+      string name = 1;
+      CustomScorerParam = 2;
+   }
+}
+
 // =============================================================================
 // Prompt Optimization Messages
 // =============================================================================
@@ -3128,7 +3140,7 @@ message OptimizePrompts {
   optional string prompt_url = 3 [(validate_required) = true];
   
   // List of scorer names to use for evaluation.
-  repeated string scorers = 4 [(validate_required) = true];
+  repeated ScorerParam scorers = 4 [(validate_required) = true];
 
     // Target LLM to use for optimization.
   optional string target_llm = 5;
