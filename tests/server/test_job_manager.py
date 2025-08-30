@@ -31,7 +31,7 @@ class TestPromptOptimizationJobManager:
             return 1.0
         
         # Register the custom scorer in an experiment
-        custom_accuracy.register("custom_accuracy", _get_experiment_id())
+        custom_accuracy.register(name="custom_accuracy", experiment_id=_get_experiment_id())
         
         # Mock the optimizer to return a successful result
         def mock_fn(*args, **kwargs):
