@@ -927,3 +927,9 @@ MLFLOW_DISABLE_TELEMETRY = _BooleanEnvironmentVariable("MLFLOW_DISABLE_TELEMETRY
 #: Internal flag to enable telemetry in mlflow tests.
 #: (default: ``False``)
 _MLFLOW_TESTING_TELEMETRY = _BooleanEnvironmentVariable("_MLFLOW_TESTING_TELEMETRY", False)
+
+#: Maximum number of concurrent prompt optimization jobs that can run simultaneously.
+#: (default: ``3``)
+MLFLOW_MAX_CONCURRENT_PROMPT_OPTIMIZATION_JOBS = _EnvironmentVariable(
+    "MLFLOW_MAX_CONCURRENT_PROMPT_OPTIMIZATION_JOBS", int, 3
+)
