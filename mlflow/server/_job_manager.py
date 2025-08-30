@@ -45,7 +45,7 @@ class PromptOptimizationJobManager:
                 "algorithm": algorithm,
                 "result": None,
                 "error": None,
-                "created_time": time.time()
+                "created_time": int(time.time() * 1000)
             }
 
             # Submit the job to the thread pool
@@ -71,12 +71,14 @@ class PromptOptimizationJobManager:
             job["status"] = GetOptimizePromptsJob.PromptOptimizationJobStatus.RUNNING
 
             # Load datasets
-            train_dataset = get_dataset(job["train_dataset_id"])
-            eval_dataset = get_dataset(job["eval_dataset_id"])
-
-            # Convert to pandas DataFrames
+            train_dataset = get_dataset(dataset_id=job["train_dataset_id"])
             train_df = train_dataset.to_df()
-            eval_df = eval_dataset.to_df() if eval_dataset else None
+
+            if eval_dataset_id := job.get("eval_dataset_id"):
+                eval_dataset = get_dataset(eval_dataset_id)
+                eval_df = eval_dataset.to_df()
+            else:
+                eval_df = None
 
             # Validate dataset structure
             required_columns = ["inputs", "expectations"]
@@ -141,10 +143,7 @@ class PromptOptimizationJobManager:
 
             algorithm_kwarg = {"algorithm": algorithm} if algorithm else {}
 
-            optimizer_config = OptimizerConfig(
-                algorithm=algorithm,
-                **algorithm_kwarg,
-            )
+            optimizer_config = OptimizerConfig(**algorithm_kwarg)
 
             prompt_input_url = job["prompt_url"]
 
@@ -168,6 +167,8 @@ class PromptOptimizationJobManager:
             job["status"] = GetOptimizePromptsJob.PromptOptimizationJobStatus.COMPLETED
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             job["status"] = GetOptimizePromptsJob.PromptOptimizationJobStatus.FAILED
             job["error"] = str(e)
             _logger.error(f"Prompt optimization job {job_id} failed: {e}")
