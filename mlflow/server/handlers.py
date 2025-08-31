@@ -121,7 +121,7 @@ from mlflow.protos.service_pb2 import (
     GetLoggedModel,
     GetMetricHistory,
     GetMetricHistoryBulkInterval,
-    GetOptimizePromptsJob,
+    GetOptimizePromptJob,
     GetRun,
     GetScorer,
     GetTraceInfo,
@@ -139,7 +139,7 @@ from mlflow.protos.service_pb2 import (
     LogOutputs,
     LogParam,
     MlflowService,
-    OptimizePrompts,
+    OptimizePrompt,
     RegisterScorer,
     RemoveDatasetFromExperiments,
     RestoreExperiment,
@@ -3822,12 +3822,11 @@ def _get_dataset_records_handler(dataset_id):
 @catch_mlflow_exception
 @_disable_if_artifacts_only
 def _optimize_prompts_handler():
-    """Handle POST /ajax-api/3.0/mlflow/optimize-prompts"""
     from mlflow.server._job_manager import _prompt_optimization_job_manager
     from google.protobuf.json_format import MessageToDict
 
     request_message = _get_request_message(
-        OptimizePrompts(),
+        OptimizePrompt(),
         schema={
             "train_dataset_id": [_assert_required, _assert_string],
             "eval_dataset_id": [_assert_string],
@@ -3851,7 +3850,7 @@ def _optimize_prompts_handler():
         algorithm=algorithm,
     )
 
-    response_message = OptimizePrompts.Response()
+    response_message = OptimizePrompt.Response()
     response_message.job_id = job_id
     return _wrap_response(response_message)
 
@@ -3859,7 +3858,6 @@ def _optimize_prompts_handler():
 @catch_mlflow_exception
 @_disable_if_artifacts_only
 def _get_optimize_prompts_job_handler(job_id):
-    """Handle GET /ajax-api/3.0/mlflow/optimize-prompts/{jobId}"""
     from mlflow.server._job_manager import _prompt_optimization_job_manager
 
     job = _prompt_optimization_job_manager.get_job(job_id)
@@ -3870,11 +3868,11 @@ def _get_optimize_prompts_job_handler(job_id):
             RESOURCE_DOES_NOT_EXIST,
         )
     
-    response_message = GetOptimizePromptsJob.Response()
+    response_message = GetOptimizePromptJob.Response()
 
     response_message.status = job["status"]
     # Add result if job is completed
-    if job["status"] == GetOptimizePromptsJob.PromptOptimizationJobStatus.COMPLETED:
+    if job["status"] == GetOptimizePromptJob.PromptOptimizationJobStatus.COMPLETED:
         result = response_message.result
         result.prompt_url = job["result"]["prompt_url"]
         result.evaluation_score = job["result"]["evaluation_score"]
@@ -3997,6 +3995,6 @@ HANDLERS = {
     GetScorer: _get_scorer,
     DeleteScorer: _delete_scorer,
     # Prompt Optimization APIs
-    OptimizePrompts: _optimize_prompts_handler,
-    GetOptimizePromptsJob: _get_optimize_prompts_job_handler,
+    OptimizePrompt: _optimize_prompts_handler,
+    GetOptimizePromptJob: _get_optimize_prompts_job_handler,
 }

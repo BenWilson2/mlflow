@@ -1113,11 +1113,11 @@ service MlflowService {
   // =============================================================================
 
   // Start a prompt optimization job.
-  rpc optimizePrompts(OptimizePrompts) returns (OptimizePrompts.Response) {
+  rpc OptimizePrompt(OptimizePrompt) returns (OptimizePrompt.Response) {
     option (rpc) = {
       endpoints: [{
         method: "POST",
-        path: "/ajax-api/3.0/mlflow/optimize-prompts"
+        path: "/mlflow/optimize-prompt"
         since { major: 3, minor: 0 },
       }],
       error_codes: [
@@ -1131,11 +1131,11 @@ service MlflowService {
   }
 
   // Get the status and result of a prompt optimization job.
-  rpc getOptimizePromptsJob(GetOptimizePromptsJob) returns (GetOptimizePromptsJob.Response) {
+  rpc getOptimizePromptJob(GetOptimizePromptJob) returns (GetOptimizePromptJob.Response) {
     option (rpc) = {
       endpoints: [{
         method: "GET",
-        path: "/ajax-api/3.0/mlflow/optimize-prompts/{job_id}"
+        path: "/mlflow/get-optimize-prompt-job/{job_id}"
         since { major: 3, minor: 0 },
       }],
       error_codes: [
@@ -3127,7 +3127,7 @@ message ScorerParam {
 // =============================================================================
 
 // Request to start a prompt optimization job.
-message OptimizePrompts {
+message OptimizePrompt {
   option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
 
   // ID of the training dataset.
@@ -3155,7 +3155,7 @@ message OptimizePrompts {
 }
 
 // Request to get the status and result of a prompt optimization job.
-message GetOptimizePromptsJob {
+message GetOptimizePromptJob {
   option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
 
   // ID of the optimization job.
@@ -3163,7 +3163,7 @@ message GetOptimizePromptsJob {
 
   // Status of a prompt optimization job.
   enum PromptOptimizationJobStatus {
-    PROMPT_OPTIMIZATION_JOB_STATUS_UNSPECIFIED = 0;
+    UNSPECIFIED = 0;
 
     // Job is pending and waiting to start.
     PENDING = 1;

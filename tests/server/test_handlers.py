@@ -46,8 +46,8 @@ from mlflow.protos.service_pb2 import (
     ListScorerVersions,
     RegisterScorer,
     SearchRuns,
-    OptimizePrompts,
-    GetOptimizePromptsJob,
+    OptimizePrompt,
+    GetOptimizePromptJob,
 )
 from mlflow.server import (
     ARTIFACTS_DESTINATION_ENV_VAR,
@@ -1521,7 +1521,7 @@ def test_delete_scorer_with_version(mock_get_request_message, mock_tracking_stor
 def test_optimize_prompts_handler(mock_get_request_message):
     """Test _optimize_prompts_handler."""
     # Mock the request message
-    mock_request = OptimizePrompts(
+    mock_request = OptimizePrompt(
         train_dataset_id="train_dataset_123",
         eval_dataset_id="eval_dataset_456",
         prompt_url="prompt://test_prompt",
@@ -1581,7 +1581,7 @@ def test_get_optimize_prompts_job_handler(mock_get_request_message):
     with mock.patch("mlflow.server._job_manager._prompt_optimization_job_manager") as mock_job_manager:
         # Mock a completed job
         mock_job = {
-            "status": GetOptimizePromptsJob.PromptOptimizationJobStatus.COMPLETED,
+            "status": GetOptimizePromptJob.PromptOptimizationJobStatus.COMPLETED,
             "result": {
                 "prompt_url": "prompt://my_prompt/3",
                 "evaluation_score": 0.95
@@ -1609,7 +1609,7 @@ def test_get_optimize_prompts_job_handler_running_job(mock_get_request_message):
     with mock.patch("mlflow.server._job_manager._prompt_optimization_job_manager") as mock_job_manager:
         # Mock a pending job
         mock_job = {
-            "status": GetOptimizePromptsJob.PromptOptimizationJobStatus.RUNNING,
+            "status": GetOptimizePromptJob.PromptOptimizationJobStatus.RUNNING,
             "result": None
         }
         mock_job_manager.get_job.return_value = mock_job
