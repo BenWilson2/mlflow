@@ -7,7 +7,7 @@ from unittest.mock import patch
 from mlflow.server._job_manager import PromptOptimizationJobManager
 from mlflow.genai.datasets import create_dataset
 from mlflow.genai.optimize.types import OptimizerOutput
-from mlflow.protos.service_pb2 import GetOptimizePromptsJob
+from mlflow.protos.service_pb2 import GetOptimizePromptJob
 from mlflow.genai.scorers import scorer
 from mlflow.tracking.fluent import _get_experiment_id
 from tests.genai.optimize.test_base import sample_prompt, sample_data
@@ -89,13 +89,13 @@ class TestPromptOptimizationJobManager:
         assert job["target_llm"] == "gpt-4"
         assert job["algorithm"] == "DSPy/MIPROv2"
         assert "created_time" in job
-        assert job["status"] == GetOptimizePromptsJob.PromptOptimizationJobStatus.RUNNING
+        assert job["status"] == GetOptimizePromptJob.PromptOptimizationJobStatus.RUNNING
         assert job["result"] is None
 
         # Wait for the job to complete
         time.sleep(1)
         job = job_manager.get_job(job_id)
-        assert job["status"] == GetOptimizePromptsJob.PromptOptimizationJobStatus.COMPLETED
+        assert job["status"] == GetOptimizePromptJob.PromptOptimizationJobStatus.COMPLETED
         assert job["result"] is not None
         assert job["result"]["prompt_url"] == f"prompts:/{sample_prompt.name}/{sample_prompt.version + 1}"
         assert job["result"]["evaluation_score"] == 1.0

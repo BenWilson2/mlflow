@@ -9,7 +9,7 @@ from mlflow.genai.scorers.builtin_scorers import get_builtin_scorer_by_name
 from mlflow.genai.optimize.types import LLMParams, OptimizerConfig
 from mlflow.exceptions import MlflowException
 from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
-from mlflow.protos.service_pb2 import GetOptimizePromptsJob
+from mlflow.protos.service_pb2 import GetOptimizePromptJob
 
 _logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class PromptOptimizationJobManager:
             self._next_job_id += 1
 
             self._jobs[job_id] = {
-                "status": GetOptimizePromptsJob.PromptOptimizationJobStatus.PENDING,
+                "status": GetOptimizePromptJob.PromptOptimizationJobStatus.PENDING,
                 "train_dataset_id": train_dataset_id,
                 "eval_dataset_id": eval_dataset_id,
                 "prompt_url": prompt_url,
@@ -68,7 +68,7 @@ class PromptOptimizationJobManager:
 
         try:
             job = self._jobs[job_id]
-            job["status"] = GetOptimizePromptsJob.PromptOptimizationJobStatus.RUNNING
+            job["status"] = GetOptimizePromptJob.PromptOptimizationJobStatus.RUNNING
 
             # Load datasets
             train_dataset = get_dataset(dataset_id=job["train_dataset_id"])
@@ -164,12 +164,12 @@ class PromptOptimizationJobManager:
                 "prompt_url": result.prompt.uri,
                 "evaluation_score": result.final_eval_score
             }
-            job["status"] = GetOptimizePromptsJob.PromptOptimizationJobStatus.COMPLETED
+            job["status"] = GetOptimizePromptJob.PromptOptimizationJobStatus.COMPLETED
 
         except Exception as e:
             import traceback
             traceback.print_exc()
-            job["status"] = GetOptimizePromptsJob.PromptOptimizationJobStatus.FAILED
+            job["status"] = GetOptimizePromptJob.PromptOptimizationJobStatus.FAILED
             job["error"] = str(e)
             _logger.error(f"Prompt optimization job {job_id} failed: {e}")
 

@@ -1518,7 +1518,7 @@ def test_delete_scorer_with_version(mock_get_request_message, mock_tracking_stor
     assert response_data == {}
 
 
-def test_optimize_prompts_handler(mock_get_request_message):
+def test_optimize_prompt_handler(mock_get_request_message):
     """Test _optimize_prompts_handler."""
     # Mock the request message
     mock_request = OptimizePrompt(
@@ -1573,7 +1573,7 @@ def test_optimize_prompts_handler(mock_get_request_message):
         assert response_data == {"job_id": "job_789"}
 
 
-def test_get_optimize_prompts_job_handler(mock_get_request_message):
+def test_get_optimize_prompt_job_handler(mock_get_request_message):
     """Test _get_optimize_prompts_job_handler."""
     job_id = "job_123"
     
@@ -1601,7 +1601,7 @@ def test_get_optimize_prompts_job_handler(mock_get_request_message):
         assert response_data["result"]["evaluation_score"] == 0.95
 
 
-def test_get_optimize_prompts_job_handler_running_job(mock_get_request_message):
+def test_get_optimize_prompt_job_handler_running_job(mock_get_request_message):
     """Test _get_optimize_prompts_job_handler for a running job."""
     job_id = "job_123"
     
@@ -1625,7 +1625,7 @@ def test_get_optimize_prompts_job_handler_running_job(mock_get_request_message):
         assert "result" not in response_data
 
 
-def test_get_optimize_prompts_job_handler_job_not_found(mock_get_request_message):
+def test_get_optimize_prompt_job_handler_job_not_found(mock_get_request_message):
     """Test _get_optimize_prompts_job_handler when job is not found."""
     job_id = "job_123"
     
