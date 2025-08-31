@@ -1113,7 +1113,7 @@ service MlflowService {
   // =============================================================================
 
   // Start a prompt optimization job.
-  rpc OptimizePrompt(OptimizePrompt) returns (OptimizePrompt.Response) {
+  rpc optimizePrompt(OptimizePrompt) returns (OptimizePrompt.Response) {
     option (rpc) = {
       endpoints: [{
         method: "POST",

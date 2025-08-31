@@ -1564,7 +1564,7 @@ class ScorerParam(_message.Message):
     custom_scorer: ScorerParam.CustomScorerParam
     def __init__(self, name: _Optional[str] = ..., custom_scorer: _Optional[_Union[ScorerParam.CustomScorerParam, _Mapping]] = ...) -> None: ...
 
-class OptimizePrompts(_message.Message):
+class OptimizePrompt(_message.Message):
     __slots__ = ("train_dataset_id", "eval_dataset_id", "prompt_url", "scorers", "target_llm", "algorithm")
     class Response(_message.Message):
         __slots__ = ("job_id",)
@@ -1585,20 +1585,20 @@ class OptimizePrompts(_message.Message):
     algorithm: str
     def __init__(self, train_dataset_id: _Optional[str] = ..., eval_dataset_id: _Optional[str] = ..., prompt_url: _Optional[str] = ..., scorers: _Optional[_Iterable[_Union[ScorerParam, _Mapping]]] = ..., target_llm: _Optional[str] = ..., algorithm: _Optional[str] = ...) -> None: ...
 
-class GetOptimizePromptsJob(_message.Message):
+class GetOptimizePromptJob(_message.Message):
     __slots__ = ("job_id",)
     class PromptOptimizationJobStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = ()
-        PROMPT_OPTIMIZATION_JOB_STATUS_UNSPECIFIED: _ClassVar[GetOptimizePromptsJob.PromptOptimizationJobStatus]
-        PENDING: _ClassVar[GetOptimizePromptsJob.PromptOptimizationJobStatus]
-        RUNNING: _ClassVar[GetOptimizePromptsJob.PromptOptimizationJobStatus]
-        COMPLETED: _ClassVar[GetOptimizePromptsJob.PromptOptimizationJobStatus]
-        FAILED: _ClassVar[GetOptimizePromptsJob.PromptOptimizationJobStatus]
-    PROMPT_OPTIMIZATION_JOB_STATUS_UNSPECIFIED: GetOptimizePromptsJob.PromptOptimizationJobStatus
-    PENDING: GetOptimizePromptsJob.PromptOptimizationJobStatus
-    RUNNING: GetOptimizePromptsJob.PromptOptimizationJobStatus
-    COMPLETED: GetOptimizePromptsJob.PromptOptimizationJobStatus
-    FAILED: GetOptimizePromptsJob.PromptOptimizationJobStatus
+        UNSPECIFIED: _ClassVar[GetOptimizePromptJob.PromptOptimizationJobStatus]
+        PENDING: _ClassVar[GetOptimizePromptJob.PromptOptimizationJobStatus]
+        RUNNING: _ClassVar[GetOptimizePromptJob.PromptOptimizationJobStatus]
+        COMPLETED: _ClassVar[GetOptimizePromptJob.PromptOptimizationJobStatus]
+        FAILED: _ClassVar[GetOptimizePromptJob.PromptOptimizationJobStatus]
+    UNSPECIFIED: GetOptimizePromptJob.PromptOptimizationJobStatus
+    PENDING: GetOptimizePromptJob.PromptOptimizationJobStatus
+    RUNNING: GetOptimizePromptJob.PromptOptimizationJobStatus
+    COMPLETED: GetOptimizePromptJob.PromptOptimizationJobStatus
+    FAILED: GetOptimizePromptJob.PromptOptimizationJobStatus
     class PromptOptimizationResult(_message.Message):
         __slots__ = ("prompt_url", "evaluation_score")
         PROMPT_URL_FIELD_NUMBER: _ClassVar[int]
@@ -1610,9 +1610,9 @@ class GetOptimizePromptsJob(_message.Message):
         __slots__ = ("status", "result")
         STATUS_FIELD_NUMBER: _ClassVar[int]
         RESULT_FIELD_NUMBER: _ClassVar[int]
-        status: GetOptimizePromptsJob.PromptOptimizationJobStatus
-        result: GetOptimizePromptsJob.PromptOptimizationResult
-        def __init__(self, status: _Optional[_Union[GetOptimizePromptsJob.PromptOptimizationJobStatus, str]] = ..., result: _Optional[_Union[GetOptimizePromptsJob.PromptOptimizationResult, _Mapping]] = ...) -> None: ...
+        status: GetOptimizePromptJob.PromptOptimizationJobStatus
+        result: GetOptimizePromptJob.PromptOptimizationResult
+        def __init__(self, status: _Optional[_Union[GetOptimizePromptJob.PromptOptimizationJobStatus, str]] = ..., result: _Optional[_Union[GetOptimizePromptJob.PromptOptimizationResult, _Mapping]] = ...) -> None: ...
     JOB_ID_FIELD_NUMBER: _ClassVar[int]
     job_id: str
     def __init__(self, job_id: _Optional[str] = ...) -> None: ...
