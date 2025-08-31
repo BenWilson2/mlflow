@@ -3836,7 +3836,7 @@ def _optimize_prompts_handler():
             "algorithm": [_assert_string],
         },
     )
-    
+
     target_llm = request_message.target_llm
     algorithm = request_message.algorithm or "DSPy/MIPROv2"
 

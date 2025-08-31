@@ -75,7 +75,7 @@ class PromptOptimizationJobManager:
             train_df = train_dataset.to_df()
 
             if eval_dataset_id := job.get("eval_dataset_id"):
-                eval_dataset = get_dataset(eval_dataset_id)
+                eval_dataset = get_dataset(dataset_id=eval_dataset_id)
                 eval_df = eval_dataset.to_df()
             else:
                 eval_df = None
