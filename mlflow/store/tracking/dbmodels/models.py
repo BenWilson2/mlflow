@@ -2076,10 +2076,6 @@ class SqlSecret(Base):
     """
     Shared flag: `Boolean`. True if secret can be reused across resources, False for private.
     """
-    state = Column(String(36), nullable=False, default="ACTIVE")
-    """
-    Secret state: `String` (limit 36 characters). Can be ACTIVE, REVOKED, or ROTATED.
-    """
     created_by = Column(String(255), nullable=True)
     """
     Creator user ID: `String` (limit 255 characters).
@@ -2100,11 +2096,10 @@ class SqlSecret(Base):
     __table_args__ = (
         PrimaryKeyConstraint("secret_id", name="secrets_pk"),
         Index("index_secrets_is_shared_secret_name", "is_shared", "secret_name"),
-        Index("index_secrets_state", "state"),
     )
 
     def __repr__(self):
-        return f"<SqlSecret ({self.secret_id}, {self.secret_name}, {self.state})>"
+        return f"<SqlSecret ({self.secret_id}, {self.secret_name})>"
 
 
 class SqlSecretBinding(Base):

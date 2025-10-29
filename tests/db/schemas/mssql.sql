@@ -91,7 +91,6 @@ CREATE TABLE secrets (
 	kek_version INTEGER NOT NULL,
 	masked_value VARCHAR(100) COLLATE "SQL_Latin1_General_CP1_CI_AS" NOT NULL,
 	is_shared BIT NOT NULL,
-	state VARCHAR(36) COLLATE "SQL_Latin1_General_CP1_CI_AS" NOT NULL,
 	created_by VARCHAR(255) COLLATE "SQL_Latin1_General_CP1_CI_AS",
 	created_at BIGINT NOT NULL,
 	last_updated_by VARCHAR(255) COLLATE "SQL_Latin1_General_CP1_CI_AS",

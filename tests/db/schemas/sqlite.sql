@@ -94,7 +94,6 @@ CREATE TABLE secrets (
 	kek_version INTEGER NOT NULL,
 	masked_value VARCHAR(100) NOT NULL,
 	is_shared BOOLEAN NOT NULL,
-	state VARCHAR(36) NOT NULL,
 	created_by VARCHAR(255),
 	created_at BIGINT NOT NULL,
 	last_updated_by VARCHAR(255),
