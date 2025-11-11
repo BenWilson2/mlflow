@@ -92,7 +92,9 @@ CREATE TABLE secrets (
 	kek_version INTEGER NOT NULL,
 	masked_value VARCHAR(100) NOT NULL,
 	provider VARCHAR(64),
-	model VARCHAR(256),
+	encrypted_auth_config BLOB,
+	wrapped_auth_config_dek BLOB,
+	description TEXT,
 	is_shared TINYINT NOT NULL,
 	created_by VARCHAR(255),
 	created_at BIGINT NOT NULL,
@@ -223,6 +225,23 @@ CREATE TABLE registered_model_tags (
 )
 
 
+CREATE TABLE routes (
+	route_id VARCHAR(36) NOT NULL,
+	secret_id VARCHAR(36) NOT NULL,
+	model_name VARCHAR(256) NOT NULL,
+	name VARCHAR(255),
+	description TEXT,
+	encrypted_model_config BLOB,
+	wrapped_model_config_dek BLOB,
+	created_by VARCHAR(255),
+	created_at BIGINT NOT NULL,
+	last_updated_by VARCHAR(255),
+	last_updated_at BIGINT NOT NULL,
+	PRIMARY KEY (route_id),
+	CONSTRAINT fk_routes_secret_id FOREIGN KEY(secret_id) REFERENCES secrets (secret_id) ON DELETE CASCADE
+)
+
+
 CREATE TABLE runs (
 	run_uuid VARCHAR(32) NOT NULL,
 	name VARCHAR(250),
@@ -255,18 +274,12 @@ CREATE TABLE scorers (
 )
 
 
-CREATE TABLE secrets_bindings (
-	binding_id VARCHAR(36) NOT NULL,
+CREATE TABLE secret_tags (
 	secret_id VARCHAR(36) NOT NULL,
-	resource_type VARCHAR(50) NOT NULL,
-	resource_id VARCHAR(255) NOT NULL,
-	field_name VARCHAR(255) NOT NULL,
-	created_at BIGINT NOT NULL,
-	created_by VARCHAR(255),
-	last_updated_at BIGINT NOT NULL,
-	last_updated_by VARCHAR(255),
-	PRIMARY KEY (binding_id),
-	CONSTRAINT fk_secrets_bindings_secret_id FOREIGN KEY(secret_id) REFERENCES secrets (secret_id) ON DELETE CASCADE
+	key VARCHAR(250) NOT NULL,
+	value VARCHAR(5000),
+	PRIMARY KEY (secret_id, key),
+	CONSTRAINT fk_secret_tags_secret_id FOREIGN KEY(secret_id) REFERENCES secrets (secret_id) ON DELETE CASCADE
 )
 
 
@@ -401,6 +414,15 @@ CREATE TABLE params (
 )
 
 
+CREATE TABLE route_tags (
+	route_id VARCHAR(36) NOT NULL,
+	key VARCHAR(250) NOT NULL,
+	value VARCHAR(5000),
+	PRIMARY KEY (route_id, key),
+	CONSTRAINT fk_route_tags_route_id FOREIGN KEY(route_id) REFERENCES routes (route_id) ON DELETE CASCADE
+)
+
+
 CREATE TABLE scorer_versions (
 	scorer_id VARCHAR(36) NOT NULL,
 	scorer_version INTEGER NOT NULL,
@@ -408,6 +430,21 @@ CREATE TABLE scorer_versions (
 	creation_time BIGINT,
 	PRIMARY KEY (scorer_id, scorer_version),
 	CONSTRAINT fk_scorer_versions_scorer_id FOREIGN KEY(scorer_id) REFERENCES scorers (scorer_id) ON DELETE CASCADE
+)
+
+
+CREATE TABLE secrets_bindings (
+	binding_id VARCHAR(36) NOT NULL,
+	route_id VARCHAR(36) NOT NULL,
+	resource_type VARCHAR(50) NOT NULL,
+	resource_id VARCHAR(255) NOT NULL,
+	field_name VARCHAR(255) NOT NULL,
+	created_at BIGINT NOT NULL,
+	created_by VARCHAR(255),
+	last_updated_at BIGINT NOT NULL,
+	last_updated_by VARCHAR(255),
+	PRIMARY KEY (binding_id),
+	CONSTRAINT fk_secrets_bindings_route_id FOREIGN KEY(route_id) REFERENCES routes (route_id) ON DELETE CASCADE
 )
 
 

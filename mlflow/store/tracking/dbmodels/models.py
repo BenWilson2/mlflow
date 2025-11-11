@@ -2075,12 +2075,22 @@ class SqlSecret(Base):
     provider = Column(String(64), nullable=True)
     """
     LLM provider identifier: `String` (limit 64 characters). Optional.
-    E.g., "anthropic", "openai", "cohere". Used for gateway model metadata.
+    E.g., "anthropic", "openai", "cohere", "vertex_ai", "bedrock", "databricks".
     """
-    model = Column(String(256), nullable=True)
+    encrypted_auth_config = Column(LargeBinary, nullable=True)
     """
-    LLM model identifier: `String` (limit 256 characters). Optional.
-    E.g., "claude-3-5-sonnet-20241022", "gpt-4-turbo". Used for gateway model metadata.
+    Encrypted provider authentication config: `LargeBinary`. Combined nonce (12 bytes) +
+    AES-GCM ciphertext + tag (16 bytes). Used for complex provider authentication like
+    AWS Bedrock (access keys), Azure OpenAI (endpoints), Vertex AI (service accounts).
+    """
+    wrapped_auth_config_dek = Column(LargeBinary, nullable=True)
+    """
+    Wrapped auth config data encryption key: `LargeBinary`. DEK encrypted by KEK.
+    Used to decrypt encrypted_auth_config.
+    """
+    description = Column(Text, nullable=True)
+    """
+    Secret description: `Text`. Optional user-provided description for the API key.
     """
     is_shared = Column(Boolean, nullable=False, default=False)
     """
@@ -2112,10 +2122,159 @@ class SqlSecret(Base):
         return f"<SqlSecret ({self.secret_id}, {self.secret_name})>"
 
 
+class SqlSecretTag(Base):
+    """
+    DB model for secret tags. These are recorded in ``secret_tags`` table.
+    """
+
+    __tablename__ = "secret_tags"
+
+    secret_id = Column(
+        String(36), ForeignKey("secrets.secret_id", ondelete="CASCADE"), nullable=False
+    )
+    """
+    Secret ID: `String` (limit 36 characters). *Foreign Key* into ``secrets`` table.
+    Part of *Primary Key* for ``secret_tags`` table.
+    """
+    key = Column(String(250), nullable=False)
+    """
+    Tag key: `String` (limit 250 characters). Part of *Primary Key* for ``secret_tags`` table.
+    """
+    value = Column(String(5000), nullable=True)
+    """
+    Tag value: `String` (limit 5000 characters). Could be *null*.
+    """
+
+    secret = relationship("SqlSecret", backref=backref("tags", cascade="all"))
+    """
+    SQLAlchemy relationship (many:one) with :py:class:`mlflow.store.dbmodels.models.SqlSecret`.
+    """
+
+    __table_args__ = (
+        PrimaryKeyConstraint("secret_id", "key", name="secret_tags_pk"),
+        Index("index_secret_tags_secret_id", "secret_id"),
+    )
+
+    def __repr__(self):
+        return f"<SqlSecretTag ({self.secret_id}, {self.key}, {self.value})>"
+
+
+class SqlRoute(Base):
+    """
+    DB model for routes. These are recorded in ``routes`` table.
+    Maps API keys (secrets) to specific model configurations for LLM providers.
+    """
+
+    __tablename__ = "routes"
+
+    route_id = Column(String(36), nullable=False)
+    """
+    Route ID: `String` (limit 36 characters). *Primary Key* for ``routes`` table.
+    """
+    secret_id = Column(
+        String(36), ForeignKey("secrets.secret_id", ondelete="CASCADE"), nullable=False
+    )
+    """
+    Secret ID: `String` (limit 36 characters). *Foreign Key* into ``secrets`` table.
+    References the API key used for this model configuration.
+    """
+    model_name = Column(String(256), nullable=False)
+    """
+    Model name: `String` (limit 256 characters). Required.
+    E.g., "claude-3-5-sonnet-20241022", "gpt-4-turbo", "gemini-2.5-pro".
+    """
+    name = Column(String(255), nullable=True)
+    """
+    Display name: `String` (limit 255 characters). Optional user-friendly name.
+    If not provided, model_name is used for display.
+    """
+    description = Column(Text, nullable=True)
+    """
+    Route description: `Text`. Optional user-provided description for the model route.
+    """
+    encrypted_model_config = Column(LargeBinary, nullable=True)
+    """
+    Encrypted model runtime config: `LargeBinary`. Combined nonce (12 bytes) +
+    AES-GCM ciphertext + tag (16 bytes). Contains runtime parameters like temperature,
+    max_tokens, base_url (for Azure), and other provider-specific overrides.
+    """
+    wrapped_model_config_dek = Column(LargeBinary, nullable=True)
+    """
+    Wrapped model config data encryption key: `LargeBinary`. DEK encrypted by KEK.
+    Used to decrypt encrypted_model_config.
+    """
+    created_by = Column(String(255), nullable=True)
+    """
+    Creator user ID: `String` (limit 255 characters).
+    """
+    created_at = Column(BigInteger, default=get_current_time_millis, nullable=False)
+    """
+    Creation timestamp: `BigInteger`.
+    """
+    last_updated_by = Column(String(255), nullable=True)
+    """
+    Last updater user ID: `String` (limit 255 characters).
+    """
+    last_updated_at = Column(BigInteger, default=get_current_time_millis, nullable=False)
+    """
+    Last update timestamp: `BigInteger`.
+    """
+
+    secret = relationship("SqlSecret", backref=backref("routes", cascade="all"))
+    """
+    SQLAlchemy relationship (many:one) with :py:class:`mlflow.store.dbmodels.models.SqlSecret`.
+    """
+
+    __table_args__ = (
+        PrimaryKeyConstraint("route_id", name="routes_pk"),
+        UniqueConstraint("name", name="unique_route_name"),
+        Index("index_routes_secret_id", "secret_id"),
+        Index("index_routes_model_name", "model_name"),
+    )
+
+    def __repr__(self):
+        return f"<SqlRoute ({self.route_id}, {self.model_name})>"
+
+
+class SqlRouteTag(Base):
+    """
+    DB model for route tags. These are recorded in ``route_tags`` table.
+    """
+
+    __tablename__ = "route_tags"
+
+    route_id = Column(String(36), ForeignKey("routes.route_id", ondelete="CASCADE"), nullable=False)
+    """
+    Route ID: `String` (limit 36 characters). *Foreign Key* into ``routes`` table.
+    Part of *Primary Key* for ``route_tags`` table.
+    """
+    key = Column(String(250), nullable=False)
+    """
+    Tag key: `String` (limit 250 characters). Part of *Primary Key* for ``route_tags`` table.
+    """
+    value = Column(String(5000), nullable=True)
+    """
+    Tag value: `String` (limit 5000 characters). Could be *null*.
+    """
+
+    route = relationship("SqlRoute", backref=backref("tags", cascade="all"))
+    """
+    SQLAlchemy relationship (many:one) with :py:class:`mlflow.store.dbmodels.models.SqlRoute`.
+    """
+
+    __table_args__ = (
+        PrimaryKeyConstraint("route_id", "key", name="route_tags_pk"),
+        Index("index_route_tags_route_id", "route_id"),
+    )
+
+    def __repr__(self):
+        return f"<SqlRouteTag ({self.route_id}, {self.key}, {self.value})>"
+
+
 class SqlSecretBinding(Base):
     """
     DB model for secret bindings. These are recorded in ``secrets_bindings`` table.
-    Maps secrets to resources (e.g., binding an API key secret to an MLflow object).
+    Maps routes (model configurations) to resources (e.g., binding a route to a scorer job).
     """
 
     __tablename__ = "secrets_bindings"
@@ -2124,19 +2283,19 @@ class SqlSecretBinding(Base):
     """
     Binding ID: `String` (limit 36 characters). *Primary Key* for ``secrets_bindings`` table.
     """
-    secret_id = Column(
-        String(36), ForeignKey("secrets.secret_id", ondelete="CASCADE"), nullable=False
-    )
+    route_id = Column(String(36), ForeignKey("routes.route_id", ondelete="CASCADE"), nullable=False)
     """
-    Secret ID: `String` (limit 36 characters). *Foreign Key* into ``secrets`` table.
+    Route ID: `String` (limit 36 characters). *Foreign Key* into ``routes`` table.
+    References the model configuration used by this resource.
     """
     resource_type = Column(String(50), nullable=False)
     """
-    Resource type: `String` (limit 50 characters). E.g., SCORER_JOB.
+    Resource type: `String` (limit 50 characters).
+    E.g., SCORER_JOB, etc.
     """
     resource_id = Column(String(255), nullable=False)
     """
-    Resource ID: `String` (limit 255 characters). ID of the resource using this secret.
+    Resource ID: `String` (limit 255 characters). ID of the resource using this route.
     """
     field_name = Column(String(255), nullable=False)
     """
@@ -2159,17 +2318,14 @@ class SqlSecretBinding(Base):
     Last updater user ID: `String` (limit 255 characters).
     """
 
-    secret = relationship("SqlSecret", backref=backref("bindings", cascade="all"))
+    route = relationship("SqlRoute", backref=backref("bindings", cascade="all"))
     """
-    SQLAlchemy relationship (many:one) with :py:class:`mlflow.store.dbmodels.models.SqlSecret`.
+    SQLAlchemy relationship (many:one) with :py:class:`mlflow.store.dbmodels.models.SqlRoute`.
     """
 
     __table_args__ = (
         PrimaryKeyConstraint("binding_id", name="secrets_bindings_pk"),
-        UniqueConstraint(
-            "resource_type", "resource_id", "field_name", name="unique_binding_per_resource"
-        ),
-        Index("index_secrets_bindings_secret_id", "secret_id"),
+        Index("index_secrets_bindings_route_id", "route_id"),
         Index("index_secrets_bindings_resource_type_resource_id", "resource_type", "resource_id"),
     )
 
