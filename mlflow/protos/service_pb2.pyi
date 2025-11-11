@@ -1710,7 +1710,7 @@ class GetSecretInfo(_message.Message):
     def __init__(self, secret_id: _Optional[str] = ...) -> None: ...
 
 class UpdateSecret(_message.Message):
-    __slots__ = ("secret_id", "secret_value", "updated_by")
+    __slots__ = ("secret_id", "secret_value", "updated_by", "provider", "model")
     class Response(_message.Message):
         __slots__ = ("secret",)
         SECRET_FIELD_NUMBER: _ClassVar[int]
@@ -1719,10 +1719,14 @@ class UpdateSecret(_message.Message):
     SECRET_ID_FIELD_NUMBER: _ClassVar[int]
     SECRET_VALUE_FIELD_NUMBER: _ClassVar[int]
     UPDATED_BY_FIELD_NUMBER: _ClassVar[int]
+    PROVIDER_FIELD_NUMBER: _ClassVar[int]
+    MODEL_FIELD_NUMBER: _ClassVar[int]
     secret_id: str
     secret_value: str
     updated_by: str
-    def __init__(self, secret_id: _Optional[str] = ..., secret_value: _Optional[str] = ..., updated_by: _Optional[str] = ...) -> None: ...
+    provider: str
+    model: str
+    def __init__(self, secret_id: _Optional[str] = ..., secret_value: _Optional[str] = ..., updated_by: _Optional[str] = ..., provider: _Optional[str] = ..., model: _Optional[str] = ...) -> None: ...
 
 class DeleteSecret(_message.Message):
     __slots__ = ("secret_id",)

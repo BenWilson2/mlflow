@@ -3796,6 +3796,8 @@ def _update_secret():
             "secret_id": [_assert_required, _assert_string],
             "secret_value": [_assert_required, _assert_string],
             "updated_by": [_assert_string],
+            "provider": [_assert_string],
+            "model": [_assert_string],
         },
     )
 
@@ -3803,6 +3805,8 @@ def _update_secret():
         secret_id=request_message.secret_id,
         secret_value=request_message.secret_value,
         updated_by=request_message.updated_by if request_message.HasField("updated_by") else None,
+        provider=request_message.provider if request_message.HasField("provider") else None,
+        model=request_message.model if request_message.HasField("model") else None,
     )
 
     response_message = UpdateSecret.Response()
@@ -3901,6 +3905,91 @@ def _list_secret_bindings():
     for binding in bindings:
         response_message.bindings.add().CopyFrom(binding.to_proto())
     return _wrap_response(response_message)
+
+
+@catch_mlflow_exception
+@_disable_if_artifacts_only
+def _list_gateway_providers():
+    """Return the list of supported gateway providers with fallback models."""
+    try:
+        from mlflow.gateway.providers import get_gateway_providers
+
+        providers = get_gateway_providers()
+        return Response(
+            response=json.dumps({"providers": [p.to_dict() for p in providers]}),
+            status=200,
+            mimetype="application/json",
+        )
+    except Exception as e:
+        _logger.error(f"Error listing gateway providers: {e}")
+        return Response(
+            response=json.dumps({"providers": [], "error": str(e)}),
+            status=500,
+            mimetype="application/json",
+        )
+
+
+@catch_mlflow_exception
+@_disable_if_artifacts_only
+def _fetch_provider_models():
+    """Proxy endpoint to fetch models from provider APIs."""
+    import requests
+
+    try:
+        data = request.get_json()
+        provider = data.get("provider")
+        api_key = data.get("api_key")
+
+        if not provider or not api_key:
+            return Response(
+                response=json.dumps({"error": "provider and api_key required"}),
+                status=400,
+                mimetype="application/json",
+            )
+
+        # Provider API endpoints
+        endpoints = {
+            "anthropic": {
+                "url": "https://api.anthropic.com/v1/models",
+                "headers": {"x-api-key": api_key, "anthropic-version": "2023-06-01"},
+            },
+            "openai": {
+                "url": "https://api.openai.com/v1/models",
+                "headers": {"Authorization": f"Bearer {api_key}"},
+            },
+        }
+
+        if provider not in endpoints:
+            return Response(
+                response=json.dumps({"models": [], "message": "Manual entry required"}),
+                status=200,
+                mimetype="application/json",
+            )
+
+        config = endpoints[provider]
+        resp = requests.get(config["url"], headers=config["headers"], timeout=10)
+        resp.raise_for_status()
+
+        models = [m["id"] for m in resp.json().get("data", [])]
+        return Response(
+            response=json.dumps({"models": models, "provider": provider}),
+            status=200,
+            mimetype="application/json",
+        )
+
+    except requests.exceptions.HTTPError as e:
+        return Response(
+            response=json.dumps({"models": [], "error": "Invalid API key or network error"}),
+            status=401 if e.response.status_code == 401 else 503,
+            mimetype="application/json",
+        )
+    except Exception as e:
+        _logger.error(f"Error fetching provider models: {e}")
+        return Response(
+            response=json.dumps({"models": [], "error": str(e)}),
+            status=500,
+            mimetype="application/json",
+        )
 
 
 def _get_rest_path(base_path, version=2):

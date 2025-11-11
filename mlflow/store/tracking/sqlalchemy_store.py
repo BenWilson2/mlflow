@@ -2551,9 +2551,11 @@ class SqlAlchemyStore(AbstractStore):
         secret_id: str,
         secret_value: str | dict[str, Any],
         updated_by: str | None = None,
+        provider: str | None = None,
+        model: str | None = None,
     ) -> Secret:
         """
-        Update an existing secret's value (key rotation).
+        Update an existing secret's value (key rotation) and optionally its provider/model metadata.
 
         This preserves the secret_id and all bindings, allowing transparent key rotation.
 
@@ -2561,9 +2563,11 @@ class SqlAlchemyStore(AbstractStore):
             secret_id: ID of the secret to update.
             secret_value: New secret value to encrypt.
             updated_by: Username of the updater. Optional.
+            provider: New provider name. Optional.
+            model: New model name. Optional.
 
         Returns:
-            Updated Secret entity with new encrypted value.
+            Updated Secret entity with new encrypted value and metadata.
         """
         with self.ManagedSessionMaker() as session:
             sql_secret = session.query(SqlSecret).filter_by(secret_id=secret_id).first()
@@ -2589,6 +2593,12 @@ class SqlAlchemyStore(AbstractStore):
             sql_secret.masked_value = masked_value
             sql_secret.last_updated_by = updated_by
             sql_secret.last_updated_at = get_current_time_millis()
+
+            # Update provider and model if provided
+            if provider is not None:
+                sql_secret.provider = provider
+            if model is not None:
+                sql_secret.model = model
 
             session.commit()
             session.refresh(sql_secret)

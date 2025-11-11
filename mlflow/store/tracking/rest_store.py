@@ -1364,6 +1364,8 @@ class RestStore(AbstractStore):
         secret_id: str,
         secret_value: str,
         updated_by: str | None = None,
+        provider: str | None = None,
+        model: str | None = None,
     ) -> Secret:
         """
         Update the value of an existing secret.
@@ -1372,6 +1374,8 @@ class RestStore(AbstractStore):
             secret_id: ID of the secret to update.
             secret_value: New secret value.
             updated_by: User ID updating the secret.
+            provider: New provider name. Optional.
+            model: New model name. Optional.
 
         Returns:
             Updated Secret entity.
@@ -1381,6 +1385,8 @@ class RestStore(AbstractStore):
                 secret_id=secret_id,
                 secret_value=secret_value,
                 updated_by=updated_by,
+                provider=provider,
+                model=model,
             )
         )
         response_proto = self._call_endpoint(

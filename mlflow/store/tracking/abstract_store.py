@@ -1411,6 +1411,8 @@ class AbstractStore:
         secret_id: str,
         secret_value: str,
         updated_by: str | None = None,
+        provider: str | None = None,
+        model: str | None = None,
     ):
         """
         Update an existing secret's value. This API preserves the secret_id and all bindings,
@@ -1420,6 +1422,8 @@ class AbstractStore:
             secret_id: ID of the secret to update.
             secret_value: New secret value to encrypt.
             updated_by: User ID updating the secret, or None.
+            provider: New provider name. Optional.
+            model: New model name. Optional.
 
         Returns:
             Updated Secret entity with new encrypted value.

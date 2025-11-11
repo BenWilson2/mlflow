@@ -3434,6 +3434,10 @@ message UpdateSecret {
   optional string secret_value = 2;
   // User ID updating the secret.
   optional string updated_by = 3;
+  // Provider name (e.g., 'openai', 'anthropic'). Optional - if not provided, existing value is retained.
+  optional string provider = 4;
+  // Model name (e.g., 'gpt-4', 'claude-3'). Optional - if not provided, existing value is retained.
+  optional string model = 5;
 
   message Response {
     // The updated secret metadata.

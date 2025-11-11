@@ -268,8 +268,7 @@ CREATE TABLE secrets_bindings (
 	last_updated_at BIGINT NOT NULL,
 	last_updated_by VARCHAR(255),
 	CONSTRAINT secrets_bindings_pk PRIMARY KEY (binding_id),
-	CONSTRAINT fk_secrets_bindings_secret_id FOREIGN KEY(secret_id) REFERENCES secrets (secret_id) ON DELETE CASCADE,
-	CONSTRAINT unique_binding_per_resource UNIQUE (resource_type, resource_id, field_name)
+	CONSTRAINT fk_secrets_bindings_secret_id FOREIGN KEY(secret_id) REFERENCES secrets (secret_id) ON DELETE CASCADE
 )
 
 
