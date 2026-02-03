@@ -5010,6 +5010,7 @@ def _delete_demo():
                 # If hard delete fails, continue - soft delete is sufficient
                 pass
 
+
     return jsonify(
         {
             "status": "deleted",
